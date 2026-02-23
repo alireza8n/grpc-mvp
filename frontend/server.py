@@ -2,35 +2,40 @@ import json
 import logging
 import math
 import os
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import grpc
+from google.protobuf.empty_pb2 import Empty
+
 import metrics_pb2
 import metrics_pb2_grpc
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 GRPC_HOST = os.environ.get("GRPC_HOST", "grpc-server")
 GRPC_PORT = os.environ.get("GRPC_PORT", "50051")
 HTTP_PORT = int(os.environ.get("HTTP_PORT", "8000"))
+GRPC_TIMEOUT_SECONDS = float(os.environ.get("GRPC_TIMEOUT_SECONDS", "5"))
+
+GRPC_CHANNEL = grpc.insecure_channel(f"{GRPC_HOST}:{GRPC_PORT}")
+GRPC_STUB = metrics_pb2_grpc.MetricsServiceStub(GRPC_CHANNEL)
 
 
 def fetch_metrics():
-    channel = grpc.insecure_channel(f"{GRPC_HOST}:{GRPC_PORT}")
-    stub = metrics_pb2_grpc.MetricsServiceStub(channel)
-    response = stub.GetMetrics(metrics_pb2.Empty())
+    response = GRPC_STUB.GetMetrics(Empty(), timeout=GRPC_TIMEOUT_SECONDS)
     return [
-        {"time": p.time, "meterusage": None if math.isnan(
-            p.meterusage) else p.meterusage}
+        {
+            "time": p.time,
+            "meterusage": None if math.isnan(p.meterusage) else p.meterusage,
+        }
         for p in response.data
     ]
 
 
 class Handler(BaseHTTPRequestHandler):
-    def log_message(self, fmt, *args):  # silence default access log spam
-        log.info("%s - %s", self.address_string(), fmt % args)
+    def log_message(self, format, *args):  # silence default access log spam
+        log.info("%s - %s", self.address_string(), format % args)
 
     def do_GET(self):
         if self.path == "/api/metrics":
@@ -68,7 +73,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve():
-    server = HTTPServer(("0.0.0.0", HTTP_PORT), Handler)
+    server = ThreadingHTTPServer(("0.0.0.0", HTTP_PORT), Handler)
     log.info("HTTP server listening on port %d", HTTP_PORT)
     server.serve_forever()
 

@@ -13,8 +13,7 @@ import metrics_pb2_grpc
 
 MetricsResponse = getattr(metrics_pb2, "MetricsResponse")
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 DB_HOST = os.environ.get("DB_HOST", "timescaledb")
@@ -33,18 +32,19 @@ def wait_for_db(retries=20, delay=3):
     for attempt in range(1, retries + 1):
         try:
             conn = psycopg2.connect(
-                host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
-                user=DB_USER, password=DB_PASS
+                host=DB_HOST,
+                port=DB_PORT,
+                dbname=DB_NAME,
+                user=DB_USER,
+                password=DB_PASS,
             )
             conn.close()
             log.info("Database is ready.")
             return
         except psycopg2.OperationalError as e:
-            log.warning("Attempt %d/%d – DB not ready: %s",
-                        attempt, retries, e)
+            log.warning("Attempt %d/%d – DB not ready: %s", attempt, retries, e)
             time.sleep(delay)
-    raise RuntimeError(
-        "Could not connect to the database after %d attempts." % retries)
+    raise RuntimeError("Could not connect to the database after %d attempts." % retries)
 
 
 def get_conn():
@@ -148,8 +148,7 @@ class MetricsServicer(metrics_pb2_grpc.MetricsServiceServicer):
         cur = None
         try:
             cur = conn.cursor()
-            cur.execute(
-                "SELECT time, meterusage FROM meter_readings ORDER BY time;")
+            cur.execute("SELECT time, meterusage FROM meter_readings ORDER BY time;")
             rows = cur.fetchall()
         finally:
             if cur is not None:
@@ -171,8 +170,7 @@ def serve():
     setup_db()
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    metrics_pb2_grpc.add_MetricsServiceServicer_to_server(
-        MetricsServicer(), server)
+    metrics_pb2_grpc.add_MetricsServiceServicer_to_server(MetricsServicer(), server)
     server.add_insecure_port("[::]:50051")
     server.start()
     log.info("gRPC server listening on port 50051")

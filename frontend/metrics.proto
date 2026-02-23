@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package metrics;
+
+service MetricsService {
+  rpc GetMetrics (Empty) returns (MetricsResponse);
+}
+
+message Empty {}
+
+message MetricPoint {
+  string time = 1;
+  double meterusage = 2;
+}
+
+message MetricsResponse {
+  repeated MetricPoint data = 1;
+}

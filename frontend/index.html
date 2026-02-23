@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meter Usage</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 640px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 0.5rem 1rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        #status {
+            margin-bottom: 1rem;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Meter Usage</h1>
+    <p id="status">Loading…</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Usage (kWh)</th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+
+    <script>
+        fetch('/api/metrics')
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (json) {
+                var rows = json.data;
+                var tbody = document.getElementById('tbody');
+                rows.forEach(function (row) {
+                    var tr = document.createElement('tr');
+                    var td1 = document.createElement('td');
+                    td1.textContent = row.time;
+                    var td2 = document.createElement('td');
+                    td2.textContent = row.meterusage;
+                    tr.appendChild(td1);
+                    tr.appendChild(td2);
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('status').textContent =
+                    rows.length + ' records loaded.';
+            })
+            .catch(function (err) {
+                document.getElementById('status').textContent = 'Error: ' + err.message;
+            });
+    </script>
+</body>
+
+</html>

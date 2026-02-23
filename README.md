@@ -81,3 +81,20 @@ docker compose down
 - **No persistent volume for DB**: Per the requirements, TimescaleDB data lives only inside the container; the database is re-seeded on every `docker compose up`.
 - **Zero frontend framework**: The HTML page uses only vanilla JS (`fetch` + DOM manipulation) to keep the implementation minimal and dependency-free.
 - **CSV mounted as read-only**: `meterusage.csv` is bind-mounted into the backend container at `/data/meterusage.csv` (read-only) so the original file is never modified.
+
+---
+
+## Backend Environment Variables
+
+The gRPC backend supports the following environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_HOST` | `timescaledb` | PostgreSQL/TimescaleDB host |
+| `DB_PORT` | `5432` | PostgreSQL port |
+| `DB_NAME` | `metrics` | Database name |
+| `DB_USER` | `postgres` | Database username |
+| `DB_PASS` | `postgres` | Database password |
+| `CSV_PATH` | `/data/meterusage.csv` | CSV file path inside the backend container |
+| `DB_POOL_MIN_CONN` | `1` | Minimum open connections in the psycopg2 pool |
+| `DB_POOL_MAX_CONN` | `10` | Maximum open connections in the psycopg2 pool |

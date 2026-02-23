@@ -12,6 +12,6 @@ RUN python -m grpc_tools.protoc \
     --grpc_python_out=. \
     metrics.proto
 
-COPY server.py .
+COPY server/ ./server/
 
-CMD ["python", "server.py"]
+CMD ["python", "-m", "server"]

@@ -3,10 +3,12 @@ syntax = "proto3";
 package metrics;
 
 service MetricsService {
-  rpc GetMetrics (Empty) returns (MetricsResponse);
+  rpc GetMetrics (MetricsRequest) returns (MetricsResponse);
 }
 
-message Empty {}
+message MetricsRequest {
+  // start empty, can add fields later
+}
 
 message MetricPoint {
   string time = 1;

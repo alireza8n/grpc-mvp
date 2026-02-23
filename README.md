@@ -59,6 +59,71 @@ Wait until you see `gRPC server listening on port 50051` and `HTTP server listen
 docker compose down
 ```
 
+### Makefile
+
+A `Makefile` is provided as a convenience wrapper. Run `make help` to list all targets:
+
+```
+$ make help
+  up                 Start all services (build if needed)
+  up-detach          Start all services in the background
+  down               Stop and remove containers
+  down-volumes       Stop containers and delete volumes (resets DB)
+  logs               Follow logs for all services
+  logs-backend       Follow logs for the gRPC server
+  logs-frontend      Follow logs for the frontend
+  build              Rebuild all Docker images without starting
+  ps                 Show running containers
+  venv               Create the virtual environment
+  install            Install backend runtime + test dependencies
+  test               Run unit tests
+  test-cov           Run tests with coverage report
+  proto              Regenerate protobuf stubs for both services
+  help               Show this help message
+```
+
+---
+
+## Tests
+
+Unit tests cover the three backend layers (`db`, `orm`, `servicer`) using `unittest` + `pytest`. All external dependencies (psycopg2, gRPC context) are mocked so no running database is required.
+
+### Setup
+
+```bash
+make install   # creates .venv and installs runtime + test deps
+```
+
+Or manually:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r backend/requirements.txt -r backend/requirements-test.txt
+```
+
+### Run
+
+```bash
+make test          # run all tests
+make test-cov      # run with coverage report
+```
+
+Or directly with pytest:
+
+```bash
+cd backend && ../.venv/bin/pytest tests/ -v
+```
+
+### Test structure
+
+```
+backend/
+  tests/
+    test_db.py        # wait_for_db, init_pool, close_pool, get_conn, put_conn
+    test_orm.py       # get_readings, setup_db, _seed
+    test_servicer.py  # MetricsServicer.GetMetrics
+```
+
 ---
 
 ## Tech Stack

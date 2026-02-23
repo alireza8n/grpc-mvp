@@ -72,8 +72,7 @@ def get_readings() -> list[tuple]:
     cur = None
     try:
         cur = conn.cursor()
-        cur.execute(
-            "SELECT time, meterusage FROM meter_readings ORDER BY time;")
+        cur.execute("SELECT time, meterusage FROM meter_readings ORDER BY time;")
         return cur.fetchall()
     finally:
         if cur is not None:

@@ -9,8 +9,7 @@ from .orm import setup_db
 from .servicer import MetricsServicer
 from .settings import GRPC_PORT, GRPC_WORKERS
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 
@@ -20,8 +19,7 @@ def serve() -> None:
     setup_db()
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=GRPC_WORKERS))
-    metrics_pb2_grpc.add_MetricsServiceServicer_to_server(
-        MetricsServicer(), server)
+    metrics_pb2_grpc.add_MetricsServiceServicer_to_server(MetricsServicer(), server)
     server.add_insecure_port(f"[::]:{GRPC_PORT}")
     server.start()
     log.info("gRPC server listening on port %d", GRPC_PORT)

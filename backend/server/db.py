@@ -23,18 +23,19 @@ def wait_for_db(retries: int = 20, delay: int = 3) -> None:
     for attempt in range(1, retries + 1):
         try:
             conn = psycopg2.connect(
-                host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
-                user=DB_USER, password=DB_PASS,
+                host=DB_HOST,
+                port=DB_PORT,
+                dbname=DB_NAME,
+                user=DB_USER,
+                password=DB_PASS,
             )
             conn.close()
             log.info("Database is ready.")
             return
         except psycopg2.OperationalError as exc:
-            log.warning("Attempt %d/%d – DB not ready: %s",
-                        attempt, retries, exc)
+            log.warning("Attempt %d/%d – DB not ready: %s", attempt, retries, exc)
             time.sleep(delay)
-    raise RuntimeError(
-        "Could not connect to the database after %d attempts." % retries)
+    raise RuntimeError("Could not connect to the database after %d attempts." % retries)
 
 
 def init_pool() -> None:

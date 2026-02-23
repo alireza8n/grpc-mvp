@@ -141,11 +141,18 @@ backend/
 ## Design Decisions
 
 - **Proto-first**: A single `metrics.proto` file drives both the server and the client; protobuf stubs are generated at Docker build time with `grpc_tools.protoc`, so no pre-generated files need to be committed.
+- **`GetMetrics` request uses a typed `Empty` message instead of the well-known `google.protobuf.Empty`**: The RPC is defined as `GetMetrics(Empty) returns (MetricsResponse)` using a local `Empty` message with no fields. This preserves forward-compatibility — fields can be added to the request later (e.g. filters, pagination) without a breaking change to the service contract.
+- **Database connection pool**: psycopg2's `ThreadedConnectionPool` is used instead of opening a new connection per request. This avoids hammering the database with connection overhead under concurrent gRPC calls and keeps the number of open connections bounded by `DB_POOL_MAX_CONN`.
+- **Reused gRPC stub + multithreaded frontend**: The frontend creates the gRPC channel and stub once at startup and shares them across all HTTP requests, handled by Python's `ThreadingHTTPServer`. This avoids the latency of re-establishing the channel on every request and allows the frontend to handle multiple in-flight gRPC calls concurrently without queuing.
+- **TimescaleDB instead of plain PostgreSQL**: TimescaleDB was chosen to stay close to a real-world IoT/time-series stack. It provides native hypertable partitioning by time, which scales to billions of rows without manual sharding — a natural fit for meter data — while avoiding the overhead of building a hand-rolled in-memory store.
+- **Layered backend architecture**: The server code is split into `settings.py`, `db.py`, `orm.py`, and `servicer.py` rather than a single file. Each layer has a single responsibility (config, connection management, data access, RPC handling), making the code easier to read, test in isolation, and extend.
+- **No pagination**: The current dataset is small and fully fits in a single response. Pagination was deliberately omitted to keep the implementation simple; the `Empty` request message can be extended with `page_size` / `page_token` fields in a future iteration without a breaking proto change.
 - **Idempotent seeding**: The backend checks whether the table is empty before inserting rows, making restarts safe without data duplication.
 - **Health-check dependency**: The `grpc-server` uses `depends_on: condition: service_healthy` to wait for TimescaleDB's `pg_isready` check before starting, removing the need for an external entrypoint script. The backend also has its own retry loop for extra robustness.
 - **No persistent volume for DB**: Per the requirements, TimescaleDB data lives only inside the container; the database is re-seeded on every `docker compose up`.
 - **Zero frontend framework**: The HTML page uses only vanilla JS (`fetch` + DOM manipulation) to keep the implementation minimal and dependency-free.
 - **CSV mounted as read-only**: `meterusage.csv` is bind-mounted into the backend container at `/data/meterusage.csv` (read-only) so the original file is never modified.
+- **Vibe-coding prompt preserved**: The initial prompt used to scaffold the repository with an AI coding assistant is kept in `vibe-coding/cursor-prompt.md` for transparency and reproducibility.
 
 ---
 
